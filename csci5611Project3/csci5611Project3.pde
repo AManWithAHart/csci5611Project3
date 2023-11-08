@@ -6,9 +6,6 @@ void setup(){
 //Root
 Vec2 root = new Vec2(500,800);
 
-
-
-
 //Upper Arm
 float l0 = 200; 
 float a0 = 0.3; //Shoulder joint
@@ -29,14 +26,38 @@ float l3 = 150;
 float a3 = 0.3;
 
 
-
 Vec2 start_l1,start_l2, start_l3, endPoint;
 
+int dir = 1;
+
 void solve(){
+  if(root.x > 900){
+    dir = -1;
+  }
+  else if(root.x < 100){
+    dir = 1;
+  }
+    root.x += dir;
+  
   Vec2 goal = new Vec2(mouseX, mouseY);
   
   Vec2 startToGoal, startToEndEffector;
   float dotProd, angleDiff;
+  
+  //Update finger joint
+  startToGoal = goal.minus(start_l3);
+  startToEndEffector = endPoint.minus(start_l3);
+  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
+  dotProd = clamp(dotProd,-1,1);
+  angleDiff = acos(dotProd);
+  if (cross(startToGoal,startToEndEffector) < 0)
+    a3 += angleDiff;
+  else
+    a3 -= angleDiff;
+
+  if(a3 > 1){a3 = 1;}
+  if(a3 < -1){a3 = -1;}
+  fk();
   
   //Update wrist joint
   startToGoal = goal.minus(start_l2);
@@ -51,12 +72,7 @@ void solve(){
   /*TODO: Wrist joint limits here*/
   if(a2 > 1){a2 = 1;}
   if(a2 < -1){a2 = -1;}
-  
-  
-  
   fk(); //Update link positions with fk (e.g. end effector changed)
-  
-  
   
   //Update elbow joint
   startToGoal = goal.minus(start_l1);
@@ -68,14 +84,9 @@ void solve(){
     a1 += angleDiff;
   else
     a1 -= angleDiff;
+  if(a1 > 1){a1 = 1;}
+  if(a1 < -1){a1 = -1;}
   fk(); //Update link positions with fk (e.g. end effector changed)
-  
-  
-  
-  
-  
-  
-  
   
   //Update shoulder joint
   startToGoal = goal.minus(root);
@@ -90,11 +101,8 @@ void solve(){
     a0 -= angleDiff;
     
   /*TODO: Shoulder joint limits here*/
-  
   if(a0 > -0.7){a0 = -0.7;}
   if(a0 < -2.5){a0 = -2.5;}
-  
-  
   
   fk(); //Update link positions with fk (e.g. end effector changed)
  
@@ -104,8 +112,8 @@ void solve(){
 void fk(){
   start_l1 = new Vec2(cos(a0)*l0,sin(a0)*l0).plus(root);
   start_l2 = new Vec2(cos(a0+a1)*l1,sin(a0+a1)*l1).plus(start_l1);
-  endPoint = new Vec2(cos(a0+a1+a2)*l2,sin(a0+a1+a2)*l2).plus(start_l2);
-  //start_l3 = new Vec2(cos(a0+a1+a2)*l2,sin(a0+a1+a2)*l2).plus(start_l2);
+  start_l3 = new Vec2(cos(a0+a1+a2)*l2,sin(a0+a1+a2)*l2).plus(start_l2);
+  endPoint = new Vec2(cos(a0+a1+a2+a3)*l3,sin(a0+a1+a2+a3)*l3).plus(start_l3);
 }
 
 float armW = 20;
@@ -115,16 +123,6 @@ void draw(){
   
   background(250,250,250);
   
-  
-
-
-  fill(214,168,133);
-  pushMatrix();
-  translate(root.x,root.y);
-  rotate(a0);
-  rect(0, -armW/2, l0, armW);
-  popMatrix();
-  
   fill(150, 0, 150);
   pushMatrix();
   translate(root.x, root.y);
@@ -132,6 +130,11 @@ void draw(){
   popMatrix();
   
   fill(214,168,133);
+  pushMatrix();
+  translate(root.x,root.y);
+  rotate(a0);
+  rect(0, -armW/2, l0, armW);
+  popMatrix();
   
   
   pushMatrix();
@@ -146,10 +149,13 @@ void draw(){
   rect(0, -armW/2, l2, armW);
   popMatrix();
   
+    pushMatrix();
+  translate(start_l3.x,start_l3.y);
+  rotate(a0+a1+a2+a3);
+  rect(0, -armW/2, l3, armW);
+  popMatrix();
+  
 }
-
-
-
 
 
 public class Vec2 {
