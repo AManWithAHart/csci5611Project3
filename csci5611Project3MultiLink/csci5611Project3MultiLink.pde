@@ -55,28 +55,36 @@ float rightAngle2 = 0.3; //right lower arm
 float r3 = 100;
 float rightAngle3 = 0.3; //right wrist
 
+Vec2 target = new Vec2(0,0);
+float targetSpeed = 5;
 
 
 
-
-Vec2 start_b1, start_l1, start_l2, start_l3, start_r1, endPoint, endPoint2, start_r2, start_r3;
+Vec2 start_b1, start_b2, start_l1, start_l2, start_l3, start_r1, endPoint, endPoint2, start_r2, start_r3;
 
 int dir = 1;
 void solve(){
   
-  //if(root.x > 900){
-  //  dir = -1;
-  //}
-  //else if(root.x < 100){
-  //  dir = 1;
-  //}
-  //  root.x += dir;
+  if(root.x > 900){
+    dir = -1;
+  }
+  else if(root.x < 100){
+    dir = 1;
+  }
+    root.x += dir;
   
+  Vec2 mover = new Vec2(0,0);
+  if(leftPressed){mover = new Vec2(-targetSpeed, 0);}
+  if(rightPressed){mover = new Vec2(targetSpeed, 0);}
+  if(downPressed){mover = new Vec2(0, targetSpeed);}
+  if(upPressed){mover = new Vec2(0, -targetSpeed);}
   
+  target.add(mover);
   
   
   
   Vec2 goal = new Vec2(mouseX, mouseY);
+  Vec2 goal2 = target;
   
   Vec2 startToGoal, startToEndEffector;
   float dotProd, angleDiff;
@@ -91,26 +99,34 @@ void solve(){
   //RIGHT ARM
   
   //THIRD RIGHT LINK
-  startToGoal = goal.minus(start_r3);
+  startToGoal = goal2.minus(start_r3);
   startToEndEffector = endPoint2.minus(start_r3);
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
+  
+  if(angleDiff > 0.05){angleDiff = 0.05;}
+  if(angleDiff < -0.05){angleDiff = -0.05;}
+  
   if (cross(startToGoal,startToEndEffector) < 0)
     rightAngle3 += angleDiff;
   else
     rightAngle3 -= angleDiff;
   /*TODO: Wrist joint limits here*/
   if(rightAngle3 > 1){rightAngle3 = 1;}
-  if(rightAngle2 < -1){rightAngle2 = -1;}
+  if(rightAngle3 < -1){rightAngle3 = -1;}
   fk();
   
   //SECOND RIGHT LINK
-  startToGoal = goal.minus(start_r2);
+  startToGoal = goal2.minus(start_r2);
   startToEndEffector = endPoint2.minus(start_r2);
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
+  
+  if(angleDiff > 0.05){angleDiff = 0.05;}
+  if(angleDiff < -0.05){angleDiff = -0.05;}
+  
   if (cross(startToGoal,startToEndEffector) < 0)
     rightAngle2 += angleDiff;
   else
@@ -122,11 +138,15 @@ void solve(){
   
   
   //FIRST RIGHT LINK
-  startToGoal = goal.minus(start_r1);
-  startToEndEffector = endPoint2.minus(start_r1);
+  startToGoal = goal2.minus(start_b2);
+  startToEndEffector = endPoint2.minus(start_b2);
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
+  
+  if(angleDiff > 0.05){angleDiff = 0.05;}
+  if(angleDiff < -0.05){angleDiff = -0.05;}
+  
   if (cross(startToGoal,startToEndEffector) < 0)
     rightAngle1 += angleDiff;
   else
@@ -140,54 +160,67 @@ void solve(){
   
   ////LEFT ARM
   
-  ////THIRD LEFT LINK
-  //startToGoal = goal.minus(start_l3);
-  //startToEndEffector = endPoint.minus(start_l3);
-  //dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  //dotProd = clamp(dotProd,-1,1);
-  //angleDiff = acos(dotProd);
-  //if (cross(startToGoal,startToEndEffector) < 0)
-  //  leftAngle3 += angleDiff;
-  //else
-  //  leftAngle3 -= angleDiff;
-  ///*TODO: Wrist joint limits here*/
-  ////if(leftAngle2 < -0.7){leftAngle2 = -0.7;}
-  ////if(leftAngle2 > -1){leftAngle1 = -1;}
+  //THIRD LEFT LINK
+  startToGoal = goal.minus(start_l3);
+  startToEndEffector = endPoint.minus(start_l3);
+  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
+  dotProd = clamp(dotProd,-1,1);
+  angleDiff = acos(dotProd);
   
-  //fk();
+  if(angleDiff > 0.05){angleDiff = 0.05;}
+  if(angleDiff < -0.05){angleDiff = -0.05;}
   
   
-  ////SECOND LEFT LINK
-  //startToGoal = goal.minus(start_l2);
-  //startToEndEffector = endPoint.minus(start_l2);
-  //dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  //dotProd = clamp(dotProd,-1,1);
-  //angleDiff = acos(dotProd);
-  //if (cross(startToGoal,startToEndEffector) < 0)
-  //  leftAngle2 += angleDiff;
-  //else
-  //  leftAngle2 -= angleDiff;
-  ///*TODO: Wrist joint limits here*/
-  ////if(leftAngle2 < -0.7){leftAngle2 = -0.7;}
-  ////if(leftAngle2 > -1){leftAngle1 = -1;}
+  if (cross(startToGoal,startToEndEffector) < 0)
+    leftAngle3 += angleDiff;
+  else
+    leftAngle3 -= angleDiff;
+  /*TODO: Wrist joint limits here*/
+  if(leftAngle3 > 1){leftAngle3 = 1;}
+  if(leftAngle3 < -1){leftAngle3 = -1;}
   
-  //fk();
+  fk();
   
-  ////FIRST LEFT LINK
-  //startToGoal = goal.minus(start_l1);
-  //startToEndEffector = endPoint.minus(start_l1);
-  //dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  //dotProd = clamp(dotProd,-1,1);
-  //angleDiff = acos(dotProd);
-  //if (cross(startToGoal,startToEndEffector) < 0)
-  //  leftAngle1 += angleDiff;
-  //else
-  //  leftAngle1 -= angleDiff;
-  ///*TODO: Wrist joint limits here*/
-  ////if(leftAngle1 > -0.7){leftAngle1 = -0.7;}
-  ////if(leftAngle1 < -1){leftAngle1 = -1;}
   
-  //fk();
+  //SECOND LEFT LINK
+  startToGoal = goal.minus(start_l2);
+  startToEndEffector = endPoint.minus(start_l2);
+  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
+  dotProd = clamp(dotProd,-1,1);
+  angleDiff = acos(dotProd);
+  
+  if(angleDiff > 0.05){angleDiff = 0.05;}
+  if(angleDiff < -0.05){angleDiff = -0.05;}
+  
+  if (cross(startToGoal,startToEndEffector) < 0)
+    leftAngle2 += angleDiff;
+  else
+    leftAngle2 -= angleDiff;
+  /*TODO: Wrist joint limits here*/
+  if(leftAngle2 > 1){leftAngle2 = 1;}
+  if(leftAngle2 < -1){leftAngle1 = -1;}
+  
+  fk();
+  
+  //FIRST LEFT LINK
+  startToGoal = goal.minus(start_b2);
+  startToEndEffector = endPoint.minus(start_b2);
+  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
+  dotProd = clamp(dotProd,-1,1);
+  angleDiff = acos(dotProd);
+  
+  if(angleDiff > 0.05){angleDiff = 0.05;}
+  if(angleDiff < -0.05){angleDiff = -0.05;}
+  
+  if (cross(startToGoal,startToEndEffector) < 0)
+    leftAngle1 += angleDiff;
+  else
+    leftAngle1 -= angleDiff;
+  /*TODO: Wrist joint limits here*/
+  if(leftAngle1 > 1){leftAngle1 = 1;}
+  if(leftAngle1 < -1){leftAngle1 = -1;}
+  
+  fk();
   
   
   //************************************************************
@@ -195,11 +228,24 @@ void solve(){
   
   
   //Middle Connector
-  startToGoal = goal.minus(start_b1);
-  startToEndEffector = endPoint2.minus(start_b1);
+  if(start_b1.distanceTo(goal) < start_b1.distanceTo(goal2)){
+    startToGoal = goal.minus(start_b1);
+    startToEndEffector = endPoint.minus(start_b1);
+  }
+  else{
+    startToGoal = goal2.minus(start_b1);
+    startToEndEffector = endPoint2.minus(start_b1);
+  }
+  
+  
+  
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
+  
+  if(angleDiff > 0.05){angleDiff = 0.05;}
+  if(angleDiff < -0.05){angleDiff = -0.05;}
+  
   if (cross(startToGoal,startToEndEffector) < 0)
     a1 += angleDiff;
   else
@@ -229,27 +275,70 @@ void solve(){
   println("Angle 0:",a0,"Angle 1:",a1,"Angle 2:",leftAngle1, "Angle 3:", rightAngle1, "Angle 4:", rightAngle2);
 }
 
+
+
+
+
+
+
+
+
+
+
 void fk(){
   
   
   start_b1 = new Vec2(cos(a0)*b0,sin(a0)*b0).plus(root);
+  start_b2 = new Vec2(cos(a0+a1)*b1,sin(a0+a1)*b1).plus(start_b1);
+
+  //start_l1 = new Vec2(cos(a0+a1)*b1,sin(a0+a1)*b1).plus(start_b1);
+  start_l2 = new Vec2(cos(a0+a1+leftAngle1)*l1,sin(a0+a1+leftAngle1)*l1).plus(start_b2);
+  start_l3 = new Vec2(cos(a0+a1+leftAngle1+leftAngle2)*l2,sin(a0+a1+leftAngle1+leftAngle2)*l2).plus(start_l2);
   
-  start_l1 = new Vec2(cos(a0+a1)*b1,sin(a0+a1)*b1).plus(start_b1);
-  //start_l2 = new Vec2(cos(a0+a1+leftAngle1)*l1,sin(a0+a1+leftAngle1)*l1).plus(start_l1);
-  //start_l3 = new Vec2(cos(a0+a1+leftAngle1+leftAngle2)*l2,sin(a0+a1+leftAngle1+leftAngle2)*l2).plus(start_l2);
   
+  //start_r1 = new Vec2(cos(a0+a1)*b1,sin(a0+a1)*b1).plus(start_b1);
   
-  start_r1 = new Vec2(cos(a0+a1)*b1,sin(a0+a1)*b1).plus(start_b1);
-  
-  start_r2 = new Vec2(cos(a0+a1+rightAngle1)*r1,sin(a0+a1+rightAngle1)*r1).plus(start_r1);
+  start_r2 = new Vec2(cos(a0+a1+rightAngle1)*r1,sin(a0+a1+rightAngle1)*r1).plus(start_b2);
   
   start_r3 = new Vec2(cos(a0+a1+rightAngle1+rightAngle2)*r2,sin(a0+a1+rightAngle1+rightAngle2)*r2).plus(start_r2);
   
-  //endPoint = new Vec2(cos(a0+a1+leftAngle1+leftAngle2+leftAngle3)*l3,sin(a0+a1+leftAngle1+leftAngle2)*l3).plus(start_l3);
+  endPoint = new Vec2(cos(a0+a1+leftAngle1+leftAngle2+leftAngle3)*l3,sin(a0+a1+leftAngle1+leftAngle2)*l3).plus(start_l3);
   
   endPoint2 = new Vec2(cos(a0+a1+rightAngle1+rightAngle2+rightAngle3)*r3,sin(a0+a1+rightAngle1+rightAngle2+rightAngle3)*r3).plus(start_r3);
   
 }
+
+
+boolean leftPressed, rightPressed, upPressed, downPressed, shiftPressed, paused;
+void keyPressed(){
+  if (keyCode == LEFT) leftPressed = true;
+  if (keyCode == RIGHT) rightPressed = true;
+  if (keyCode == UP) upPressed = true; 
+  if (keyCode == DOWN) downPressed = true;
+  if (keyCode == SHIFT) shiftPressed = true;
+  if (key == ' ') paused = !paused;
+}
+
+void keyReleased(){
+  if (key == 'r'){
+    println("Reseting the System");
+  }
+  if (keyCode == LEFT) leftPressed = false;
+  if (keyCode == RIGHT) rightPressed = false;
+  if (keyCode == UP) upPressed = false; 
+  if (keyCode == DOWN) downPressed = false;
+  if (keyCode == SHIFT) shiftPressed = false;
+}
+
+
+
+
+
+
+
+
+
+
 
 float armW = 20;
 void draw(){
@@ -283,32 +372,38 @@ void draw(){
   rect(0, -armW/2, b1, armW);
   popMatrix();
   
-  //pushMatrix();
-  //translate(start_l1.x,start_l1.y);
-  //rotate(a0+a1+leftAngle1);
-  //rect(0, -armW/2, l1, armW);
-  //popMatrix();
   
-  //pushMatrix();
-  //translate(start_l2.x,start_l2.y);
-  //rotate(a0+a1+leftAngle1+leftAngle2);
-  //rect(0, -armW/2, l2, armW);
-  //popMatrix();
+  fill(0,0,255);
   
+  pushMatrix();
+  translate(start_b2.x,start_b2.y);
+  rotate(a0+a1+leftAngle1);
+  rect(0, -armW/2, l1, armW);
+  popMatrix();
   
-  //pushMatrix();
-  //translate(start_l3.x,start_l3.y);
-  //rotate(a0+a1+leftAngle1+leftAngle2+leftAngle3);
-  //rect(0, -armW/2, l3, armW);
-  //popMatrix();
-  
+  pushMatrix();
+  translate(start_l2.x,start_l2.y);
+  rotate(a0+a1+leftAngle1+leftAngle2);
+  rect(0, -armW/2, l2, armW);
+  popMatrix();
   
   
   pushMatrix();
-  translate(start_r1.x,start_r1.y);
+  translate(start_l3.x,start_l3.y);
+  rotate(a0+a1+leftAngle1+leftAngle2+leftAngle3);
+  rect(0, -armW/2, l3, armW);
+  popMatrix();
+  
+  
+  fill(255,0,0);
+  
+  pushMatrix();
+  translate(start_b2.x,start_b2.y);
   rotate(a0+a1+rightAngle1);
   rect(0, -armW/2, r1, armW);
   popMatrix();
+  
+  
   
   pushMatrix();
   translate(start_r2.x,start_r2.y);
@@ -321,6 +416,11 @@ void draw(){
   rotate(a0+a1+rightAngle1+rightAngle2+rightAngle3);
   rect(0, -armW/2, r3, armW);
   popMatrix();
+  
+  fill(0,255,0);
+  circle(target.x, target.y, 5);
+  
+  
 }
 
 
