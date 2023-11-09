@@ -5,6 +5,10 @@ rat[] colony = new rat[1000];
 player player1 = new player(50, 50, 10);
 boolean [][] gridChecker = new boolean[40][40];
 
+float ratSpeed = 5;
+
+float playerSpeed = 5;
+
 Vec2 acc = new Vec2(1,1);
 
 int[] coord = new int[2];
@@ -74,7 +78,6 @@ void closestNodeToRat(){
   for(int i = 0; i < grid.length; i++){
     for(int j = 0; j < grid[0].length; j++){
       for(int r = 0; r < colony.length; r++){
-        //nullpointerexception
           if(colony[r].pos.distanceTo(grid[i][j].pos) < colony[r].pos.distanceTo(colony[r].closest.pos)){
                colony[r].closest = grid[i][j];
                grid[i][j].numRats++;
@@ -98,24 +101,28 @@ void RatPathing(){
           if(i - 1 >= 0){
              if(grid[i - 1][j].dist <  colony[r].closest.dist){
                colony[r].closest = grid[i-1][j];
+               colony[r].pos.add(new Vec2(0,-ratSpeed));
              }
           }
           
           if(i + 1 <= grid.length){
             if(grid[i + 1][j].dist < colony[r].closest.dist){
                colony[r].closest = grid[i+1][j];
+               colony[r].pos.add(new Vec2(0,ratSpeed));
              }
           }
           
           if(j - 1 >= 0){
              if(grid[i][j - 1].dist < colony[r].closest.dist){
                colony[r].closest = grid[i][j - 1];
+               colony[r].pos.add(new Vec2(-ratSpeed,0));
              }
           }
           
           if(j + 1 <= grid[0].length){
             if(grid[i][j + 1].dist < colony[r].closest.dist){
                colony[r].closest = grid[i][j + 1];
+               colony[r].pos.add(new Vec2(ratSpeed,0));
              }
           } 
           
@@ -142,11 +149,16 @@ void scurry(){
 }
 
 void colonyGen(){
-    float x = random(250.0, 750.0);
+    
+
+   for(int i = 0; i < colony.length; i++){
+     float x = random(250.0, 750.0);
     float y = random(0.0, 250.0);
     
-   for(int i = 0; i < colony.length; i++){
+    int a = int(random(0, 40));
+    int b = int(random(0, 40));
      colony[i] = new rat(x,y);
+     colony[i].closest = grid[a][b];
    }
     
 }
@@ -159,24 +171,82 @@ void playerSet(){
   player1.pos.y = y;
 }
 
+void update(){
+  Vec2 playerVel = new Vec2(0,0);
+  
+  if(leftPressed){playerVel = new Vec2(-playerSpeed,0);}
+  //if (leftPressed) playerVel = new Vec2(-playerVel,0);
+  if (rightPressed) playerVel = new Vec2(playerSpeed,0);
+  if (upPressed) playerVel = new Vec2(0,-playerSpeed);
+  if (downPressed) playerVel = new Vec2(0,playerSpeed);
+  
+  player1.pos.add(playerVel); 
+  
+  playerToNode();
+  distanceToPlayer(coord[0], coord[1], 0);
+  closestNodeToRat();
+  //scurry();
+  RatPathing();
+  
+  
+  
+  
+}
+
+
+boolean leftPressed, rightPressed, upPressed, downPressed, shiftPressed, paused;
+void keyPressed(){
+  if (keyCode == LEFT) leftPressed = true;
+  if (keyCode == RIGHT) rightPressed = true;
+  if (keyCode == UP) upPressed = true; 
+  if (keyCode == DOWN) downPressed = true;
+  if (keyCode == SHIFT) shiftPressed = true;
+  if (key == ' ') paused = !paused;
+}
+
+void keyReleased(){
+  if (key == 'r'){
+    println("Reseting the System");
+  }
+  if (keyCode == LEFT) leftPressed = false;
+  if (keyCode == RIGHT) rightPressed = false;
+  if (keyCode == UP) upPressed = false; 
+  if (keyCode == DOWN) downPressed = false;
+  if (keyCode == SHIFT) shiftPressed = false;
+}
+
+
+
+
+
+
+
+
+
+
+
 void setup(){
   size(800, 800);
-  colonyGen();
   playerSet();
   nodeSetter();
+  colonyGen();
   //drawNodes();
 }
 
 float dt = 0.05;
 void draw(){
-  playerToNode();
-  distanceToPlayer(coord[0], coord[1], 0);
-  closestNodeToRat();
-  scurry();
+  update();
+  //playerToNode();
+  //distanceToPlayer(coord[0], coord[1], 0);
+  //closestNodeToRat();
+  ////scurry();
+  //RatPathing();
+  
+  background(255,255,255);
   
   fill(135,135,135);
   for(int i = 0; i < colony.length; i++){
-    circle(colony[i].pos.x, colony[i].pos.y, 10);
+    circle(colony[i].pos.x, colony[i].pos.y, 5);
   }
   
   fill(3,84,171);
@@ -202,11 +272,11 @@ void drawNodes(){
 public class player{
   float x, y, r;
   Vec2 pos;
-  Vec2 vel;
+  //Vec2 vel;
   public player(float x, float y, float r){
     this.pos = new Vec2(x,y);
     this.r = r;
-    this.vel = new Vec2(0,0);
+    //this.vel = new Vec2(0,0);
   }
 }
 
