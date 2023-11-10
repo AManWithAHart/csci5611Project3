@@ -1,11 +1,49 @@
 void setup(){
   size(1000,1000);
   surface.setTitle("Inverse Kinematics [CSCI 5611 Example]");
+  rightJ = true;
+  leftJ = true;
+  aSpeed = true;
+  println("left blue, right red");
 }
 
 //Root
 Vec2 root = new Vec2(500,800);
 
+//Matt, if you want tot fix the arm tweek, remove the toggle feature for arm joints
+
+boolean pointLineCollision(Vec2 p, Vec2 v1, Vec2 v2) {
+    float len = v1.distanceTo(v2);
+    float d1 = p.distanceTo(v1);
+    float d2 = p.distanceTo(v2);
+    if (d1 + d2 >= len - 0.01 && d1 + d2 <= len + 0.01) {
+        return true;
+    }
+    return false;
+}
+
+boolean lineBallCollision(Vec2 v1, Vec2 v2) { //https://www.jeffreythompson.org/collision-detection/line-circle.php
+    if (v1.distanceTo(obstical_Pos) < obstical_Radius || v2.distanceTo(obstical_Pos) < obstical_Radius) { //check if line exists within circle
+        return true;
+    }
+    float len = v1.distanceTo(v2);
+    float t = (((obstical_Pos.x - v1.x) * (v2.x - v1.x)) + ((obstical_Pos.y - v1.y) * (v2.y - v1.y))) / pow(len, 2);
+    Vec2 nearestPoint = new Vec2(v1.x + (t * (v2.x - v1.x)), v1.y + (t * (v2.y - v1.y)));
+    if (nearestPoint.distanceTo(obstical_Pos) < obstical_Radius && pointLineCollision(nearestPoint, v1, v2)) {
+        return true;
+    }
+    return false;
+}
+
+int num = 0;
+
+
+
+
+
+//Obstical
+Vec2 obstical_Pos = new Vec2(500, 500);
+float obstical_Radius = 50;
 
 //******************************************
 
@@ -60,6 +98,9 @@ float targetSpeed = 5;
 
 
 
+
+
+
 Vec2 start_b1, start_b2, start_l1, start_l2, start_l3, start_r1, endPoint, endPoint2, start_r2, start_r3;
 
 int dir = 1;
@@ -78,8 +119,26 @@ void solve(){
   if(rightPressed){mover = new Vec2(targetSpeed, 0);}
   if(downPressed){mover = new Vec2(0, targetSpeed);}
   if(upPressed){mover = new Vec2(0, -targetSpeed);}
-  
   target.add(mover);
+  
+  
+  if(target.x > width - 10){
+    target.x = width - 10;  
+  }
+  if(target.x < 10){
+    target.x = 10;  
+  }
+  
+  if(target.y < 10){
+    target.y = 10;
+  }
+  
+  if(target.y > height - 10){
+    target.y = height - 10;
+  }
+  
+  
+  
   
   
   
@@ -105,16 +164,23 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   
-  if(angleDiff > 0.05){angleDiff = 0.05;}
-  if(angleDiff < -0.05){angleDiff = -0.05;}
+  if(aSpeed){
+    if(angleDiff > 0.05){angleDiff = 0.05;}
+    if(angleDiff < -0.05){angleDiff = -0.05;}
+  }
+  
   
   if (cross(startToGoal,startToEndEffector) < 0)
     rightAngle3 += angleDiff;
   else
     rightAngle3 -= angleDiff;
   /*TODO: Wrist joint limits here*/
-  if(rightAngle3 > 1){rightAngle3 = 1;}
-  if(rightAngle3 < -1){rightAngle3 = -1;}
+  
+  if(rightJ){
+    if(rightAngle3 > 1){rightAngle3 = 1;}
+    if(rightAngle3 < -1){rightAngle3 = -1;}
+  }
+  
   fk();
   
   //SECOND RIGHT LINK
@@ -124,16 +190,23 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   
-  if(angleDiff > 0.05){angleDiff = 0.05;}
-  if(angleDiff < -0.05){angleDiff = -0.05;}
+  if(aSpeed){
+    if(angleDiff > 0.05){angleDiff = 0.05;}
+    if(angleDiff < -0.05){angleDiff = -0.05;}
+  }
+  
   
   if (cross(startToGoal,startToEndEffector) < 0)
     rightAngle2 += angleDiff;
   else
     rightAngle2 -= angleDiff;
   /*TODO: Wrist joint limits here*/
-  if(rightAngle2 > 1){rightAngle2 = 1;}
-  if(rightAngle2 < -1){rightAngle2 = -1;}
+  
+  if(rightJ){
+    if(rightAngle2 > 1){rightAngle2 = 1;}
+    if(rightAngle2 < -1){rightAngle2 = -1;}
+  }
+  
   fk();
   
   
@@ -144,16 +217,23 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   
-  if(angleDiff > 0.05){angleDiff = 0.05;}
-  if(angleDiff < -0.05){angleDiff = -0.05;}
+  
+  if(aSpeed){
+    if(angleDiff > 0.05){angleDiff = 0.05;}
+    if(angleDiff < -0.05){angleDiff = -0.05;}
+  }
   
   if (cross(startToGoal,startToEndEffector) < 0)
     rightAngle1 += angleDiff;
   else
     rightAngle1 -= angleDiff;
   /*TODO: Wrist joint limits here*/
-  if(rightAngle1 > 1){rightAngle1 = 1;}
-  if(rightAngle1 < -1){rightAngle1 = -1;}
+  
+  if(rightJ){
+    if(rightAngle1 > 1){rightAngle1 = 1;}
+    if(rightAngle1 < -1){rightAngle1 = -1;}
+  }
+  
   fk();
   
   //************************************************************
@@ -167,8 +247,11 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   
-  if(angleDiff > 0.05){angleDiff = 0.05;}
-  if(angleDiff < -0.05){angleDiff = -0.05;}
+  if(aSpeed){
+     if(angleDiff > 0.05){angleDiff = 0.05;}
+     if(angleDiff < -0.05){angleDiff = -0.05;}
+  }
+  
   
   
   if (cross(startToGoal,startToEndEffector) < 0)
@@ -176,8 +259,10 @@ void solve(){
   else
     leftAngle3 -= angleDiff;
   /*TODO: Wrist joint limits here*/
-  if(leftAngle3 > 1){leftAngle3 = 1;}
-  if(leftAngle3 < -1){leftAngle3 = -1;}
+  if(leftJ){
+    if(leftAngle3 > 1){leftAngle3 = 1;}
+    if(leftAngle3 < -1){leftAngle3 = -1;}
+  }
   
   fk();
   
@@ -189,16 +274,22 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   
-  if(angleDiff > 0.05){angleDiff = 0.05;}
-  if(angleDiff < -0.05){angleDiff = -0.05;}
-  
+  if(aSpeed){
+    if(angleDiff > 0.05){angleDiff = 0.05;}
+    if(angleDiff < -0.05){angleDiff = -0.05;}
+  }
+
+
   if (cross(startToGoal,startToEndEffector) < 0)
     leftAngle2 += angleDiff;
   else
     leftAngle2 -= angleDiff;
   /*TODO: Wrist joint limits here*/
-  if(leftAngle2 > 1){leftAngle2 = 1;}
-  if(leftAngle2 < -1){leftAngle1 = -1;}
+  
+  if(leftJ){
+    if(leftAngle2 > 1){leftAngle2 = 1;}
+    if(leftAngle2 < -1){leftAngle2 = -1;}
+  }
   
   fk();
   
@@ -209,16 +300,21 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   
-  if(angleDiff > 0.05){angleDiff = 0.05;}
-  if(angleDiff < -0.05){angleDiff = -0.05;}
+  if(aSpeed){
+    if(angleDiff > 0.05){angleDiff = 0.05;}
+    if(angleDiff < -0.05){angleDiff = -0.05;}
+  }
   
   if (cross(startToGoal,startToEndEffector) < 0)
     leftAngle1 += angleDiff;
   else
     leftAngle1 -= angleDiff;
   /*TODO: Wrist joint limits here*/
-  if(leftAngle1 > 1){leftAngle1 = 1;}
-  if(leftAngle1 < -1){leftAngle1 = -1;}
+  
+  if(leftJ){
+    if(leftAngle1 > 1){leftAngle1 = 1;}
+    if(leftAngle1 < -1){leftAngle1 = -1;}
+  }
   
   fk();
   
@@ -243,13 +339,19 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   
-  if(angleDiff > 0.05){angleDiff = 0.05;}
-  if(angleDiff < -0.05){angleDiff = -0.05;}
-  
+  if(aSpeed){
+    if(angleDiff > 0.05){angleDiff = 0.05;}
+    if(angleDiff < -0.05){angleDiff = -0.05;}
+  }
   if (cross(startToGoal,startToEndEffector) < 0)
     a1 += angleDiff;
   else
     a1 -= angleDiff;
+   
+  if(a1 > 1){a1 = 1;}
+  if(a1 < -1){a1 = -1;}
+    
+    
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   
@@ -261,6 +363,12 @@ void solve(){
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
+  
+  if(aSpeed){
+    if(angleDiff > 0.05){angleDiff = 0.05;}
+    if(angleDiff < -0.05){angleDiff = -0.05;}
+  }
+  
   if (cross(startToGoal,startToEndEffector) < 0)
     a0 += angleDiff;
   else
@@ -272,7 +380,10 @@ void solve(){
   
   fk(); //Update link positions with fk (e.g. end effector changed)
  
-  println("Angle 0:",a0,"Angle 1:",a1,"Angle 2:",leftAngle1, "Angle 3:", rightAngle1, "Angle 4:", rightAngle2);
+  //println("Angle 0:",a0,"Angle 1:",a1,"Angle 2:",leftAngle1, "Angle 3:", rightAngle1, "Angle 4:", rightAngle2);
+  
+  //println("RA1:",rightAngle1, "RA2:", rightAngle2, "RA3:", rightAngle3);
+  //println("LA1:",leftAngle1, "LA2:", leftAngle2, "LA3:", leftAngle3);
 }
 
 
@@ -309,20 +420,24 @@ void fk(){
 }
 
 
-boolean leftPressed, rightPressed, upPressed, downPressed, shiftPressed, paused;
+boolean leftPressed, rightPressed, upPressed, downPressed, shiftPressed, paused, leftJ, aSpeed, rightJ;
+
+
 void keyPressed(){
   if (keyCode == LEFT) leftPressed = true;
   if (keyCode == RIGHT) rightPressed = true;
   if (keyCode == UP) upPressed = true; 
   if (keyCode == DOWN) downPressed = true;
   if (keyCode == SHIFT) shiftPressed = true;
-  if (key == ' ') paused = !paused;
+  if (key == 'r') paused = !paused;
+  if (key == 'l') {leftJ = !leftJ; println("left arm joints:", leftJ);}
+  if (key == 'k') {rightJ = !rightJ; println("right arm joints:", rightJ);}
+  
+  if (key == 'w') {aSpeed = !aSpeed; println("angle speed:", aSpeed);}
+  
 }
 
 void keyReleased(){
-  if (key == 'r'){
-    println("Reseting the System");
-  }
   if (keyCode == LEFT) leftPressed = false;
   if (keyCode == RIGHT) rightPressed = false;
   if (keyCode == UP) upPressed = false; 
@@ -342,83 +457,92 @@ void keyReleased(){
 
 float armW = 20;
 void draw(){
-  fk();
-  solve();
   
-  background(250,250,250);
+  if(!paused){
+    fk();
+    solve();
+  
+    background(250,250,250);
   
   
 
 
-  fill(214,168,133);
-  pushMatrix();
-  translate(root.x,root.y);
-  rotate(a0);
-  rect(0, -armW/2, b0, armW);
-  popMatrix();
+    fill(214,168,133);
+    pushMatrix();
+    translate(root.x,root.y);
+    rotate(a0);
+    rect(0, -armW/2, b0, armW);
+    popMatrix();
   
-  fill(150, 0, 150);
-  pushMatrix();
-  translate(root.x, root.y);
-  rect(-37.5, -20, 75, 75);
-  popMatrix();
+    fill(150, 0, 150);
+    pushMatrix();
+    translate(root.x, root.y);
+    rect(-37.5, -20, 75, 75);
+    popMatrix();
   
-  fill(214,168,133);
-  
-  
-  pushMatrix();
-  translate(start_b1.x,start_b1.y);
-  rotate(a0+a1);
-  rect(0, -armW/2, b1, armW);
-  popMatrix();
+    fill(214,168,133);
   
   
-  fill(0,0,255);
-  
-  pushMatrix();
-  translate(start_b2.x,start_b2.y);
-  rotate(a0+a1+leftAngle1);
-  rect(0, -armW/2, l1, armW);
-  popMatrix();
-  
-  pushMatrix();
-  translate(start_l2.x,start_l2.y);
-  rotate(a0+a1+leftAngle1+leftAngle2);
-  rect(0, -armW/2, l2, armW);
-  popMatrix();
+    pushMatrix();
+    translate(start_b1.x,start_b1.y);
+    rotate(a0+a1);
+    rect(0, -armW/2, b1, armW);
+    popMatrix();
   
   
-  pushMatrix();
-  translate(start_l3.x,start_l3.y);
-  rotate(a0+a1+leftAngle1+leftAngle2+leftAngle3);
-  rect(0, -armW/2, l3, armW);
-  popMatrix();
+    fill(0,0,255);
+  
+    pushMatrix();
+    translate(start_b2.x,start_b2.y);
+    rotate(a0+a1+leftAngle1);
+    rect(0, -armW/2, l1, armW);
+    popMatrix();
+  
+    pushMatrix();
+    translate(start_l2.x,start_l2.y);
+    rotate(a0+a1+leftAngle1+leftAngle2);
+    rect(0, -armW/2, l2, armW);
+    popMatrix();
   
   
-  fill(255,0,0);
-  
-  pushMatrix();
-  translate(start_b2.x,start_b2.y);
-  rotate(a0+a1+rightAngle1);
-  rect(0, -armW/2, r1, armW);
-  popMatrix();
+    pushMatrix();
+    translate(start_l3.x,start_l3.y);
+    rotate(a0+a1+leftAngle1+leftAngle2+leftAngle3);
+    rect(0, -armW/2, l3, armW);
+    popMatrix();
   
   
+    fill(255,0,0);
   
-  pushMatrix();
-  translate(start_r2.x,start_r2.y);
-  rotate(a0+a1+rightAngle1+rightAngle2);
-  rect(0, -armW/2, r2, armW);
-  popMatrix();
+    pushMatrix();
+    translate(start_b2.x,start_b2.y);
+    rotate(a0+a1+rightAngle1);
+    rect(0, -armW/2, r1, armW);
+    popMatrix();
   
-  pushMatrix();
-  translate(start_r3.x,start_r3.y);
-  rotate(a0+a1+rightAngle1+rightAngle2+rightAngle3);
-  rect(0, -armW/2, r3, armW);
-  popMatrix();
   
-  fill(0,255,0);
-  circle(target.x, target.y, 5);
+  
+    pushMatrix();
+    translate(start_r2.x,start_r2.y);
+    rotate(a0+a1+rightAngle1+rightAngle2);
+    rect(0, -armW/2, r2, armW);
+    popMatrix();
+  
+    pushMatrix();
+    translate(start_r3.x,start_r3.y);
+    rotate(a0+a1+rightAngle1+rightAngle2+rightAngle3);
+    rect(0, -armW/2, r3, armW);
+    popMatrix();
+  
+    fill(0,255,0);
+    circle(target.x, target.y, 10);
+    
+    
+    //fill(0, 155, 0);
+    //circle(obstical_Pos.x, obstical_Pos.y, obstical_Radius * 2 - armW);
+  
+  }
+  
   
   
 }
